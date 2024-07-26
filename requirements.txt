@@ -5,3 +5,12 @@ faiss
 pypdf2
 python-docx
 python-pptx
+streamlit 
+PyPDF2 
+google.generativeai
+langchain-community
+langchain
+faiss-cpu
+python-docx
+python-dotenv
+langchain_google_genai
