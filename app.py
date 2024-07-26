@@ -1,10 +1,15 @@
 import streamlit as st
-import openai
+import os
 import PyPDF2
 import docx
 import pptx
 import tempfile
-import os
+from dotenv import load_dotenv
+from langchain import LangChain
+from langchain_google_genai import GoogleGenAI
+
+# Load environment variables
+load_dotenv()
 
 # Function to extract text from PDF using PyPDF2
 def extract_text_from_pdf(file):
@@ -48,23 +53,20 @@ class SimpleChain:
         self.text = text
 
     def run(self, user_input):
-        response = openai.Completion.create(
-            engine="davinci-codex",  # or another engine
+        google_genai = GoogleGenAI(api_key=self.api_key)
+        response = google_genai.generate_response(
             prompt=f"{self.text}\n\nUser: {user_input}\nAI:",
             max_tokens=150
         )
-        return response.choices[0].text.strip()
+        return response['choices'][0]['text'].strip()
 
 # Streamlit UI
 st.title("RAG Chatbot")
-api_key = st.text_input("Enter your OpenAI API Key", type="password")
 uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "pptx"])
 
 text = ""  # Initialize text variable
 
-if api_key and uploaded_file:
-    openai.api_key = api_key
-
+if uploaded_file:
     # Save uploaded file to a temporary file
     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
         tmp_file.write(uploaded_file.read())
@@ -86,14 +88,19 @@ if api_key and uploaded_file:
 
     if text:
         # LangChain setup
-        lc = LangChain(api_key=api_key)
-        chain = lc.create_chain(text)
-        
-        # Chatbot interaction
-        user_input = st.text_input("Ask something about the document:")
-        if user_input:
-            response = chain.run(user_input)
-            st.write(response)
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            st.error("Google API key not found. Please set it in the .env file.")
+        else:
+            lc = LangChain(api_key=api_key)
+            chain = lc.create_chain(text)
+            
+            # User prompt for querying the document
+            user_prompt = st.text_input("Enter your query about the document:")
+            if user_prompt:
+                response = chain.run(user_prompt)
+                st.write("Response:")
+                st.write(response)
 
 # Display the extracted text (for debugging purposes, can be removed)
 if text:
