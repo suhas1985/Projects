@@ -5,9 +5,7 @@ import docx
 import pptx
 import tempfile
 from dotenv import load_dotenv
-from langchain.llms import OpenAI
-from langchain.chains.question_answering import load_qa_chain
-from langchain_google_genai import GoogleGenAI
+from google.generativeai import palm
 
 # Load environment variables
 load_dotenv()
@@ -19,7 +17,7 @@ def extract_text_from_pdf(file):
         pdf_reader = PyPDF2.PdfFileReader(pdf_file)
         for page_num in range(pdf_reader.getNumPages()):
             page = pdf_reader.getPage(page_num)
-            text += page.extractText()
+            text += page.extract_text()
     return text
 
 # Function to extract text from DOCX
@@ -67,22 +65,22 @@ if uploaded_file:
     os.remove(tmp_file_path)
 
     if text:
-        # GoogleGenAI setup
+        # Google GenAI setup
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             st.error("Google API key not found. Please set it in the .env file.")
         else:
-            google_genai = GoogleGenAI(api_key=api_key)
+            palm.configure(api_key=api_key)
             
             # User prompt for querying the document
             user_prompt = st.text_input("Enter your query about the document:")
             if user_prompt:
-                response = google_genai.generate_response(
+                response = palm.generate_text(
                     prompt=f"{text}\n\nUser: {user_prompt}\nAI:",
                     max_tokens=150
                 )
                 st.write("Response:")
-                st.write(response['choices'][0]['text'].strip())
+                st.write(response.result)
 
 # Display the extracted text (for debugging purposes, can be removed)
 if text:
