@@ -1,15 +1,19 @@
 import streamlit as st
 import openai
-import fitz  # PyMuPDF
+import PyPDF2
 import docx
 import pptx
+import tempfile
+import os
 
-# Function to extract text from PDF
+# Function to extract text from PDF using PyPDF2
 def extract_text_from_pdf(file):
     text = ""
-    with fitz.open(file) as pdf:
-        for page in pdf:
-            text += page.get_text()
+    with open(file, "rb") as pdf_file:
+        pdf_reader = PyPDF2.PdfFileReader(pdf_file)
+        for page_num in range(pdf_reader.getNumPages()):
+            page = pdf_reader.getPage(page_num)
+            text += page.extractText()
     return text
 
 # Function to extract text from DOCX
@@ -61,16 +65,24 @@ text = ""  # Initialize text variable
 if api_key and uploaded_file:
     openai.api_key = api_key
 
+    # Save uploaded file to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        tmp_file.write(uploaded_file.read())
+        tmp_file_path = tmp_file.name
+
     # Extract text based on file type
     if uploaded_file.name.endswith(".pdf"):
-        text = extract_text_from_pdf(uploaded_file)
+        text = extract_text_from_pdf(tmp_file_path)
     elif uploaded_file.name.endswith(".docx"):
-        text = extract_text_from_docx(uploaded_file)
+        text = extract_text_from_docx(tmp_file_path)
     elif uploaded_file.name.endswith(".pptx"):
-        text = extract_text_from_pptx(uploaded_file)
+        text = extract_text_from_pptx(tmp_file_path)
     else:
         st.error("Unsupported file type")
         text = ""
+
+    # Clean up temporary file
+    os.remove(tmp_file_path)
 
     if text:
         # LangChain setup
