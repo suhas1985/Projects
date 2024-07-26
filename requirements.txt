@@ -1,8 +1,5 @@
 streamlit
-langchain
 google-api-python-client
-faiss
-pypdf2
 python-docx
 python-pptx
 streamlit 
