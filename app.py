@@ -56,6 +56,8 @@ st.title("RAG Chatbot")
 api_key = st.text_input("Enter your OpenAI API Key", type="password")
 uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "pptx"])
 
+text = ""  # Initialize text variable
+
 if api_key and uploaded_file:
     openai.api_key = api_key
 
@@ -85,4 +87,3 @@ if api_key and uploaded_file:
 if text:
     st.subheader("Extracted Text")
     st.write(text)
-  
