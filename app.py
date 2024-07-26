@@ -5,7 +5,8 @@ import docx
 import pptx
 import tempfile
 from dotenv import load_dotenv
-from langchain import LangChain
+from langchain.llms import OpenAI
+from langchain.chains.question_answering import load_qa_chain
 from langchain_google_genai import GoogleGenAI
 
 # Load environment variables
@@ -39,27 +40,6 @@ def extract_text_from_pptx(file):
                 text += shape.text + "\n"
     return text
 
-# LangChain implementation
-class LangChain:
-    def __init__(self, api_key):
-        self.api_key = api_key
-
-    def create_chain(self, text):
-        return SimpleChain(self.api_key, text)
-
-class SimpleChain:
-    def __init__(self, api_key, text):
-        self.api_key = api_key
-        self.text = text
-
-    def run(self, user_input):
-        google_genai = GoogleGenAI(api_key=self.api_key)
-        response = google_genai.generate_response(
-            prompt=f"{self.text}\n\nUser: {user_input}\nAI:",
-            max_tokens=150
-        )
-        return response['choices'][0]['text'].strip()
-
 # Streamlit UI
 st.title("RAG Chatbot")
 uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "pptx"])
@@ -87,20 +67,22 @@ if uploaded_file:
     os.remove(tmp_file_path)
 
     if text:
-        # LangChain setup
+        # GoogleGenAI setup
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             st.error("Google API key not found. Please set it in the .env file.")
         else:
-            lc = LangChain(api_key=api_key)
-            chain = lc.create_chain(text)
+            google_genai = GoogleGenAI(api_key=api_key)
             
             # User prompt for querying the document
             user_prompt = st.text_input("Enter your query about the document:")
             if user_prompt:
-                response = chain.run(user_prompt)
+                response = google_genai.generate_response(
+                    prompt=f"{text}\n\nUser: {user_prompt}\nAI:",
+                    max_tokens=150
+                )
                 st.write("Response:")
-                st.write(response)
+                st.write(response['choices'][0]['text'].strip())
 
 # Display the extracted text (for debugging purposes, can be removed)
 if text:
