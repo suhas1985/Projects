@@ -1,11 +1,7 @@
 streamlit
-google-generative-ai
-python-dotenv
 langchain
-langchain-community
-PyPDF2
-chromadb
-faiss-cpu
-langchain-google-genai
+google-api-python-client
+faiss
+pypdf2
 python-docx
 python-pptx
